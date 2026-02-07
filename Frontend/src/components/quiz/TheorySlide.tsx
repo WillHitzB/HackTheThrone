@@ -2,10 +2,22 @@ import { motion } from 'framer-motion';
 import { ArrowRight } from 'lucide-react';
 import styles from './LessonView.module.css'; // Reusing LessonView styles for consistency
 import type { Slide } from '../../data/chapters';
-
+import { url } from '../../data/constant';
+import { colgroup } from 'framer-motion/client';
 interface TheorySlideProps {
     slide: Slide;
     onNext: () => void;
+}
+
+async function fetchdata() {
+    
+    const response =await fetch(url);
+
+    if (response) {
+        console.log(response)
+    } else {
+        console.log('not found' )    }
+
 }
 
 const TheorySlide = ({ slide, onNext }: TheorySlideProps) => {

@@ -9,6 +9,8 @@
 
     .container {
     display: flex;
+    position: relative;
+    right: 0;
     gap: 28px;
     padding: 28px;
     background: var(--bg-main);
@@ -49,7 +51,8 @@
     }
 
     .card:hover {
-    transform: translateY(-2px);
+    transform: translateY(10px);
+    transform: translateX(2px);
     box-shadow: 0 14px 36px rgba(0, 0, 0, 0.55);
     }
 
@@ -75,6 +78,8 @@
     }
 
     .rightPanel {
+    position: relative;
+    right: 0;
     width: 40%;
     display: flex;
     flex-direction: column;

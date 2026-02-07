@@ -1,6 +1,7 @@
 import { Chapters } from '../data/chapters';
 import { useNavigate } from 'react-router-dom';
 import styles from './home.module.css'
+import { url } from '../data/constant';
 // import { div, section } from 'framer-motion/client';
 
 import { Terminal } from 'lucide-react';

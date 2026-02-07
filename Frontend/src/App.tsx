@@ -6,9 +6,11 @@ import Home from './pages/Home';
 import Login from './components/login/Login';
 import Topicpage from './pages/Topicpage';
 import Practice from './pages/Practice';
-
+import { url } from './data/constant';
 function App() {
   const username = localStorage.getItem('username');
+
+
   return (
     <GamificationProvider>
       <Router>
