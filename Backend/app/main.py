@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.responses import PlainTextResponse
-from app.api import auth
+from app.api import auth, questions
 from app.database import engine, Base
 
 # Create database tables if they dont exist
@@ -9,6 +9,7 @@ Base.metadata.create_all(bind=engine)
 app = FastAPI(title="HackBee Backend")
 
 app.include_router(auth.router)
+app.include_router(questions.router)
 
 @app.get("/")
 async def root():

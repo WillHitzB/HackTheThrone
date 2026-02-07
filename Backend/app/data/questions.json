@@ -1,0 +1,35 @@
+{
+    "questions": [
+        {
+            "question_number": 1,
+            "section_number": 1,
+            "title": "Introduction to Passwords",
+            "content": "A password is a secret string of characters used to authenticate a user. It should be unique and complex.",
+            "isQuestion": false,
+            "xp_reward": 10
+        },
+        {
+            "question_number": 2,
+            "section_number": 1,
+            "title": "Password Complexity",
+            "content": "Which of the following is a strong password?",
+            "isQuestion": true,
+            "options": [
+                "123456",
+                "password",
+                "P@ssw0rd2024!",
+                "admin"
+            ],
+            "correct_answer": "P@ssw0rd2024!",
+            "xp_reward": 20
+        },
+        {
+            "question_number": 3,
+            "section_number": 1,
+            "title": "Two-Factor Authentication",
+            "content": "2FA adds an extra layer of security by requiring a second form of identification.",
+            "type": "theory",
+            "xp_reward": 10
+        }
+    ]
+}

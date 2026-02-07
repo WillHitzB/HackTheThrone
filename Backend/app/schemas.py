@@ -9,9 +9,28 @@ class UserCreate(UserBase):
 
 class UserResponse(UserBase):
     id: int
+    xp: int
+    lives: int
 
     class Config:
         from_attributes = True
+
+class UserProgressResponse(BaseModel):
+    user_id: int
+    completed_questions: list[int]
+
+class QuestionValidateRequest(BaseModel):
+    question_number: int
+    answer: str
+
+class QuestionResponse(BaseModel):
+    question_number: int
+    section_number: int
+    title: str
+    content: str
+    isQuestion: bool
+    options: Optional[list[str]] = None
+    xp_reward: int
 
 class Token(BaseModel):
     access_token: str
