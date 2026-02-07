@@ -1,3 +1,4 @@
+@import "tailwindcss";
 :root {
   /* Brand Colors - Cyber Hive */
   --bg-dark: #0f1115;
@@ -35,6 +36,10 @@
   box-sizing: border-box;
   margin: 0;
   padding: 0;
+  
+
+  
+  
 }
 
 body {
@@ -44,6 +49,7 @@ body {
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
   overflow-x: hidden;
+  background: #0b1220;
 }
 
 /* Custom Scrollbar */

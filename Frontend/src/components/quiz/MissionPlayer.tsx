@@ -1,24 +1,25 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useGamification } from '../../context/GamificationContext';
 import styles from './QuizView.module.css'; // Shared styles
 import TheorySlide from './TheorySlide';
 import QuizSlide from './QuizSlide';
-import type { Chapter } from '../../data/chapters';
-import { chapters } from '../../data/chapters';
+import type { Topic } from '../../data/chapters';
+import { Chapters } from '../../data/chapters';
 
 interface MissionPlayerProps {
-    chapter: Chapter;
+    Topic: Topic;
 }
 
-const MissionPlayer = ({ chapter }: MissionPlayerProps) => {
+const MissionPlayer = ({ Topic }: MissionPlayerProps) => {
+    const { chapterID} = useParams();
     const navigate = useNavigate();
     const { addXp, loseLife, lives } = useGamification() as any;
     const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
     const [isCompleted, setIsCompleted] = useState(false);
 
-    const slides = chapter.content;
+    const slides = Topic.content;
     const currentSlide = slides[currentSlideIndex];
 
     const handleNext = () => {
@@ -29,11 +30,11 @@ const MissionPlayer = ({ chapter }: MissionPlayerProps) => {
             setIsCompleted(true);
 
             // Mark chapter as completed and unlock next
-            chapter.status = 'completed';
-            const nextChapter = chapters.find(c => c.id === chapter.id + 1);
-            console.log(nextChapter);
-            if (nextChapter && nextChapter.status === 'locked') {
-                nextChapter.status = 'available';
+            Topic.status = 'completed';
+            const nextTopic = Chapters.find(c => c.content.find(t=>t.id=== Topic.id + 1) );
+            console.log(nextTopic);
+            if (nextTopic && nextTopic.status === 'locked') {
+                nextTopic.status = 'available';
             }
         }
     };
@@ -48,7 +49,7 @@ const MissionPlayer = ({ chapter }: MissionPlayerProps) => {
 
     const handleFinish = () => {
         addXp(100);
-        navigate('/');
+        navigate(`/lesson/${chapterID}`);
     };
 
     // Life-up / Game Over state

@@ -55,7 +55,7 @@
 }
 
 .navItem.active {
-    background-color: rgba(0, 243, 255, 0.1);
+    background-color: #00f3ff1a;
     color: var(--accent-blue);
     border-color: rgba(0, 243, 255, 0.2);
 }
@@ -64,4 +64,26 @@
     font-size: 14px;
     text-transform: uppercase;
     letter-spacing: 1px;
+}
+
+.logout {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 12px 16px;
+    border-radius: var(--radius-md);
+    background: transparent;
+    color: var(--text-muted);
+    border: 1px solid transparent;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    margin-top: auto; /* pushes logout to bottom */
+}
+
+/* Hover: destructive but subtle */
+.logout:hover {
+    background-color: rgba(239, 68, 68, 0.1);
+    color: #ef4444;
+    border-color: rgba(239, 68, 68, 0.3);
 }

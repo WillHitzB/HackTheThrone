@@ -1,0 +1,95 @@
+/* Full page wrapper */
+.container {
+  min-height: 100vh;
+  width: 100%;
+  background-color: var(--bg-main);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+}
+
+/* Card holding the form */
+.formBox {
+  width: 100%;
+  max-width: 26rem; /* relative, scalable */
+  background-color: var(--bg-card);
+  border: 1px solid var(--bg-element);
+  border-radius: var(--radius-md);
+  padding: 2rem;
+}
+
+/* Form layout */
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem; /* vertical rhythm */
+}
+
+/* Label */
+.label {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+  margin-bottom: 0.35rem;
+}
+
+/* Input field */
+.input {
+  width: 100%;
+  padding: 0.75rem 0.9rem;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--bg-element);
+  background-color: transparent;
+  color: var(--text-main);
+  font-size: 0.9rem;
+}
+
+.input::placeholder {
+  color: var(--text-muted);
+}
+
+.input:focus {
+  outline: none;
+  border-color: var(--accent-blue);
+  box-shadow: 0 0 0 0.15rem rgba(0, 243, 255, 0.15);
+}
+
+/* Error message — centered and separated */
+.error {
+  margin-top: 0.7rem;          
+  font-size: 0.8rem;
+  color: #fca5a5;
+  line-height: 1;
+}
+
+/* Submit button */
+.button {
+  margin-top: 0.75rem;
+  padding: 0.75rem;
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(0, 243, 255, 0.3);
+  background-color: rgba(0, 243, 255, 0.1);
+  color: var(--accent-blue);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.button:hover:not(:disabled) {
+  background-color: rgba(0, 243, 255, 0.2);
+}
+
+.button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Mobile refinement */
+@media (max-width: 30rem) {
+  .formBox {
+    padding: 1.5rem;
+  }
+}

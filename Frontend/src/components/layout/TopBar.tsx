@@ -1,9 +1,9 @@
-import { Heart, Zap, Hexagon } from 'lucide-react';
+import { Heart, Hexagon } from 'lucide-react';
 import { useGamification } from '../../context/GamificationContext';
 import styles from './TopBar.module.css';
 
 const TopBar = () => {
-    const { lives, xp, streak } = useGamification();
+    const { lives, xp } = useGamification();
 
     return (
         <header className={styles.topbar}>
@@ -19,14 +19,14 @@ const TopBar = () => {
                 </div>
 
                 {/* Streak */}
-                <div className={styles.statItem}>
+                {/* <div className={styles.statItem}>
                     <Zap
                         className={styles.icon}
                         fill="var(--primary)"
                         color="var(--primary)"
                     />
                     <span className={styles.value}>{streak}</span>
-                </div>
+                </div> */}
 
                 {/* XP */}
                 <div className={styles.statItem}>

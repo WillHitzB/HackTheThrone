@@ -1,56 +1,71 @@
-import LevelNode from '../components/map/LevelNode';
-import { chapters } from '../data/chapters';
+import { Chapters } from '../data/chapters';
 import { useNavigate } from 'react-router-dom';
+import styles from './home.module.css'
+// import { div, section } from 'framer-motion/client';
+
+import { Terminal } from 'lucide-react';
+import { useState } from 'react';
 
 const Home = () => {
+    const  [Number, setNumber] = useState(0) 
     const navigate = useNavigate();
 
-    const handleNodeClick = (chapter: { id: any; }) => {
+    const handlesectionClick = (chapter: { id: any; }) => {
         navigate(`/lesson/${chapter.id}`); // Navigate to lesson/quiz
+        setNumber(chapter.id)
     };
 
+    const handlepracticebtn=()=>{
+        navigate(`/practice`);
+    }
+
     return (
-        <div className="container" style={{ paddingBottom: '100px', paddingTop: '40px' }}>
-            <div style={{ textAlign: 'center', marginBottom: '60px' }}>
-                <h1 className="glow-text" style={{ fontSize: '3rem', marginBottom: '10px' }}>MISSION MAP</h1>
-                <p style={{ color: 'var(--text-muted)' }}>Choose your next target...</p>
+        <div className={styles.container}>
+        <div className={styles.sectionswrapper}>
+            {Chapters.map((sections) => (
+            <div
+                key={sections.id}
+                onClick={() => handlesectionClick(sections)}
+                className={styles.card}
+            >
+                <h2 className={styles.title}>{sections.title}</h2>
+                {/* <div className={styles.brief}>{sections.brief}</div> */}
+                <div className={styles.description}>{sections.description}</div>
+            </div>
+            ))}
+        </div>
+
+        <div className={styles.rightPanel}  >
+            <div className={styles.fact}>
+            <h1>Fact of the day!!</h1>
+            <span>
+                The internet didn’t make humans smarter or dumber. It just forced ancient
+                survival instincts to run at broadband speed, with pop-ups.
+            </span>
+            <span className={styles.factbottom}>
+                we will be having a fact each day!!
+            </span>
             </div>
 
-            <div style={{ position: 'relative', height: '600px', maxWidth: '600px', margin: '0 auto' }}>
-                {/* Connection Paths */}
-                <svg
-                    style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', zIndex: 0 }}
-                    xmlns="http://www.w3.org/2000/svg"
-                >
-                    {chapters.map((chapter, index) => {
-                        if (index === chapters.length - 1) return null;
-                        const next = chapters[index + 1];
-                        return (
-                            <line
-                                key={`path-${chapter.id}-${next.id}`}
-                                x1={`${chapter.position.x}%`}
-                                y1={chapter.position.y + 40} // Center of hex roughly (top + half height)
-                                x2={`${next.position.x}%`}
-                                y2={next.position.y + 40}
-                                stroke="var(--bg-element)"
-                                strokeWidth="4"
-                                strokeDasharray="8 8"
-                            />
-                        );
-                    })}
-                </svg>
-
-                {/* Nodes */}
-                {chapters.map((chapter) => (
-                    <LevelNode
-                        key={chapter.id}
-                        chapter={chapter}
-                        onClick={handleNodeClick}
-                    />
-                ))}
+            <div className={styles.practice}>
+            <h1>Wanna increase your XP in a fastest way?</h1>
+            <div>Try the practice section !!!!</div>
+            <button onClick={handlepracticebtn}>
+                <Terminal size={24} />
+                Practice
+            </button>
             </div>
+
+            <div className={styles.info}>
+            <h1>Your info</h1>
+            <span>Lives remaining: <strong>3</strong></span>
+            <span>Your XP: <strong>999</strong></span>
+            <span>Leaderboard rank: <strong>99</strong></span>
+            </div>
+        </div>
         </div>
     );
 };
+
 
 export default Home;
