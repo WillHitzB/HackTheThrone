@@ -2,6 +2,7 @@ import { Chapters } from '../data/chapters';
 import { useNavigate } from 'react-router-dom';
 import styles from './home.module.css'
 import { url } from '../data/constant';
+import { getRandomFact,cybersecurityFacts } from '../data/chapters';
 // import { div, section } from 'framer-motion/client';
 
 import { Terminal } from 'lucide-react';
@@ -22,18 +23,15 @@ const Home = () => {
 
     return (
         <div className={styles.container}>
-            <div className={styles.sectionswrapper}>
-                {Chapters.map((sections) => (
-                    <div
-                        key={sections.id}
-                        onClick={() => handlesectionClick(sections)}
-                        className={styles.card}
-                    >
-                        <h2 className={styles.title}>{sections.title}</h2>
-                        {/* <div className={styles.brief}>{sections.brief}</div> */}
-                        <div className={styles.description}>{sections.description}</div>
-                    </div>
-                ))}
+        <div className={styles.sectionswrapper}>
+            {Chapters.map((sections) => (
+            <div
+                key={sections.id}
+                onClick={() => handlesectionClick(sections)}
+                className={styles.card}>
+                <h2 className={styles.title}>{sections.title}</h2>
+                {/* <div className={styles.brief}>{sections.brief}</div> */}
+                <div className={styles.description}>{sections.description}</div>
             </div>
 
             <div className={styles.rightPanel}  >
