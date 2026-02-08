@@ -118,15 +118,50 @@ const Login = () => {
         if (!token) {
           console.log('No token in signup response. Logging in automatically...')
 
-      console.log('Token saved:', localStorage.getItem('access_token'))
-      console.log('Signed up and logged in successfully')
-      
+          // Step 3: Login automatically after signup
+          const body = new URLSearchParams()
+          body.append('username', data.username)
+          body.append('password', data.password)
 
-        window.location.href = '/'
-      
-    } catch (err) {
-      console.error('Signup error', err)
-      setLoginError('An error occurred during signup. Please try again.')
+          const loginResponse = await fetch(`${url}/auth/login`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: body.toString(),
+          })
+
+          if (!loginResponse.ok) {
+            setLoginError('Signup succeeded but auto-login failed. Please login manually.')
+            console.error('Auto-login failed', loginResponse.status)
+            return
+          }
+
+          const loginResult = await loginResponse.json()
+          console.log('Auto-login Response:', loginResult)
+
+          token = loginResult.access_token || loginResult.token || loginResult.accessToken
+        }
+
+        if (!token) {
+          console.error('Still no token after login:', token)
+          setLoginError('Could not obtain access token. Please try logging in manually.')
+          return
+        }
+
+        localStorage.setItem('access_token', token)
+        localStorage.setItem('username', data.username)
+
+        console.log('Token saved:', localStorage.getItem('access_token'))
+        console.log('Signed up and logged in successfully')
+
+        setTimeout(() => {
+          window.location.href = '/'
+        }, 10000);
+      } catch (err) {
+        console.error('Signup error', err)
+        setLoginError('An error occurred during signup. Please try again.')
+      }
     }
   }
 
