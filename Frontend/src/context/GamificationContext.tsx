@@ -28,7 +28,7 @@ export const GamificationProvider = ({ children }: { children: ReactNode }) => {
 
   const [lives, setLives] = useState<number>(() => {
     const stored = localStorage.getItem('lives');
-    return stored ? Number(stored) : 3;
+    return stored ? Number(stored) : 3000;
   });
 
   const [streak, setStreak] = useState(0);

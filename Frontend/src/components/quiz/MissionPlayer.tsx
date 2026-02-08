@@ -1,58 +1,245 @@
-import { useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useGamification } from '../../context/GamificationContext';
-import styles from './QuizView.module.css'; // Shared styles
+import { X } from 'lucide-react';
+import styles from './QuizView.module.css';
 import TheorySlide from './TheorySlide';
 import QuizSlide from './QuizSlide';
-import type { Topic } from '../../data/chapters';
 import { Chapters } from '../../data/chapters';
+import { callquest, validateAnswer, getuserprog } from '../../utils/Utils';
 
-interface MissionPlayerProps {
-    Topic: Topic;
+type QuestionData = {
+    question_number: number
+    content: string
+    section_title: string
+    topic_title: string
+    isQuestion: boolean
+    options?: string[]
+    correct_answer?: string
+    xp_reward: number
 }
 
-const MissionPlayer = ({ Topic }: MissionPlayerProps) => {
-    const { chapterID} = useParams();
-    const navigate = useNavigate();
+interface MissionPlayerProps {
+    chapterID: number
+    startQuestionNo: number
+    onComplete: () => void
+    onExit: () => void
+    onProgressUpdate?: () => void  // NEW PROP - Optional callback to update parent
+}
+
+const MissionPlayer = ({ chapterID, startQuestionNo, onComplete, onExit, onProgressUpdate }: MissionPlayerProps) => {
+    console.log('MissionPlayer mounted - Chapter:', chapterID, 'Start:', startQuestionNo)
+
     const { addXp, loseLife, lives } = useGamification() as any;
-    const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
+
+    const [currentQuestionNo, setCurrentQuestionNo] = useState(startQuestionNo);
+    const [questionData, setQuestionData] = useState<QuestionData | null>(null);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string>('');
     const [isCompleted, setIsCompleted] = useState(false);
 
-    const slides = Topic.content;
-    const currentSlide = slides[currentSlideIndex];
+    const chapter = Chapters.find(c => c.id === chapterID);
 
-    const handleNext = () => {
-        if (currentSlideIndex < slides.length - 1) {
-            setCurrentSlideIndex(prev => prev + 1);
-        } else {
-            // Mission Final Completion
-            setIsCompleted(true);
+    useEffect(() => {
+        console.log('Question number changed to:', currentQuestionNo)
+        fetchQuestion(currentQuestionNo);
+    }, [currentQuestionNo]);
 
-            // Mark chapter as completed and unlock next
-            Topic.status = 'completed';
-            const nextTopic = Chapters.find(c => c.content.find(t=>t.id=== Topic.id + 1) );
-            console.log(nextTopic);
-            if (nextTopic && nextTopic.status === 'locked') {
-                nextTopic.status = 'available';
+    const fetchQuestion = async (qNo: number) => {
+        console.log('Fetching question:', qNo)
+        setLoading(true);
+        setError('');
+        
+        try {
+            const data = await callquest(qNo);
+            
+            if (!data) {
+                console.error('No data returned for question:', qNo)
+                setError('Question not available yet. Complete previous questions first.');
+                return;
             }
+            
+            console.log('Question loaded:', data)
+            setQuestionData(data);
+        } catch (err) {
+            console.error('Error in fetchQuestion:', err);
+            setError('Failed to load question.');
+        } finally {
+            setLoading(false);
         }
     };
 
-    const handleCorrect = () => {
-        // Option to play sound or show immediate feedback
+    const handleTheoryComplete = async () => {
+        console.log('Theory complete - Question:', currentQuestionNo)
+        
+        if (!questionData) {
+            console.error('No question data')
+            alert('Error: No question data.')
+            return
+        }
+
+        try {
+            console.log('Validating theory...')
+            const validationResult = await validateAnswer(currentQuestionNo, null, true)
+            
+            if (!validationResult) {
+                console.error('Validation failed')
+                alert('Failed to mark theory as complete.')
+                return
+            }
+
+            console.log('Theory validated:', validationResult)
+            
+            const isSuccess = validationResult.status === 'success' || 
+                             (validationResult.message && validationResult.message.toLowerCase().includes('completed'))
+            
+            if (!isSuccess) {
+                console.error('Theory validation not successful')
+                alert('Failed to complete theory.')
+                return
+            }
+            
+            const xpAwarded = 
+                validationResult.xp_awarded || 
+                validationResult.xp || 
+                validationResult.points ||
+                questionData.xp_reward
+            
+            console.log('Awarding XP:', xpAwarded)
+            addXp(xpAwarded)
+            
+            console.log('Fetching updated progress...')
+            const progressData = await getuserprog()
+            console.log('Updated progress:', progressData)
+            
+            // Call parent callback to update map nodes
+            if (onProgressUpdate) {
+                console.log('Calling progress update callback')
+                onProgressUpdate()
+            }
+            
+            if (!chapter) return
+            
+            if (currentQuestionNo >= chapter.quest_end) {
+                console.log('Chapter complete')
+                setIsCompleted(true)
+            } else {
+                const nextQ = currentQuestionNo + 1
+                console.log('Moving to next question:', nextQ)
+                setCurrentQuestionNo(nextQ)
+            }
+            
+        } catch (err) {
+            console.error('Error in handleTheoryComplete:', err)
+            alert('An error occurred.')
+        }
     };
 
-    const handleIncorrect = () => {
-        loseLife();
+    const handleAnswerSubmit = async (selectedAnswer: string) => {
+        console.log('=== ANSWER SUBMIT START ===')
+        console.log('Question number:', currentQuestionNo)
+        console.log('Selected answer:', selectedAnswer)
+        
+        if (!questionData) {
+            console.error('No question data')
+            return { isCorrect: false }
+        }
+
+        console.log('Correct answer from question data:', questionData.correct_answer)
+
+        try {
+            console.log('Calling validateAnswer...')
+            const validationResult = await validateAnswer(currentQuestionNo, selectedAnswer, false)
+            
+            console.log('=== VALIDATION RESULT RECEIVED ===')
+            console.log('Result object:', validationResult)
+            
+            if (!validationResult) {
+                console.error('Validation returned null/undefined')
+                return { isCorrect: false }
+            }
+
+            console.log('Parsing correctness...')
+            
+            let isCorrect = false
+            
+            if (validationResult.message) {
+                const message = validationResult.message.toLowerCase()
+                console.log('Message from backend:', validationResult.message)
+                
+                if (message.includes('correct answer')) {
+                    isCorrect = true
+                } else if (message.includes('incorrect') || message.includes('wrong')) {
+                    isCorrect = false
+                }
+            }
+            
+            if (validationResult.status === 'success' && !validationResult.message) {
+                isCorrect = true
+            }
+            
+            console.log('=== FINAL RESULT ===')
+            console.log('isCorrect:', isCorrect)
+            console.log('==================')
+
+            if (isCorrect) {
+                console.log('ANSWER IS CORRECT - Proceeding...')
+                
+                const xpAwarded = 
+                    validationResult.xp_awarded || 
+                    validationResult.xp || 
+                    validationResult.points ||
+                    questionData.xp_reward
+                
+                console.log('XP to award:', xpAwarded)
+                addXp(xpAwarded)
+                console.log('XP awarded')
+                
+                console.log('Fetching progress...')
+                const progressData = await getuserprog()
+                console.log('Progress:', progressData)
+                
+                // Call parent callback to update map nodes
+                if (onProgressUpdate) {
+                    console.log('Calling progress update callback')
+                    onProgressUpdate()
+                }
+                
+                if (!chapter) {
+                    console.log('No chapter, returning')
+                    return { isCorrect: true }
+                }
+                
+                if (currentQuestionNo >= chapter.quest_end) {
+                    console.log('Last question - chapter complete')
+                    setIsCompleted(true)
+                } else {
+                    const nextQ = currentQuestionNo + 1
+                    console.log('Moving to next:', nextQ)
+                    setCurrentQuestionNo(nextQ)
+                }
+                
+            } else {
+                console.log('ANSWER IS INCORRECT - Losing life')
+                loseLife()
+                console.log('Life lost')
+            }
+
+            console.log('Returning result:', { isCorrect })
+            return { isCorrect }
+            
+        } catch (err) {
+            console.error('Exception in handleAnswerSubmit:', err)
+            return { isCorrect: false }
+        }
     };
 
     const handleFinish = () => {
+        console.log('Chapter completed - awarding bonus XP')
         addXp(100);
-        navigate(`/lesson/${chapterID}`);
+        onComplete();
     };
 
-    // Life-up / Game Over state
     if (lives === 0) {
         return (
             <div className={styles.quizContainer} style={{ textAlign: 'center' }}>
@@ -61,9 +248,9 @@ const MissionPlayer = ({ Topic }: MissionPlayerProps) => {
                     animate={{ opacity: 1, scale: 1 }}
                 >
                     <h1>SYSTEM FAILURE</h1>
-                    <p>You ran out of lives. The node has locked you out.</p>
-                    <button className={styles.checkBtn} onClick={() => navigate('/')}>
-                        Return to Base
+                    <p>You ran out of lives.</p>
+                    <button className={styles.checkBtn} onClick={onExit}>
+                        Return to Map
                     </button>
                 </motion.div>
             </div>
@@ -76,10 +263,11 @@ const MissionPlayer = ({ Topic }: MissionPlayerProps) => {
                 <motion.div
                     initial={{ opacity: 0, scale: 0.8 }}
                     animate={{ opacity: 1, scale: 1 }}
-                    style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '1rem' }}
+                    style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1rem' }}
                 >
                     <h1>MISSION ACCOMPLISHED</h1>
-                    <p>XP REWARD: +100</p>
+                    <p>CHAPTER COMPLETE</p>
+                    <p>BONUS XP: +100</p>
                     <button className={styles.checkBtn} onClick={handleFinish}>
                         Continue
                     </button>
@@ -88,39 +276,79 @@ const MissionPlayer = ({ Topic }: MissionPlayerProps) => {
         );
     }
 
-    if (!currentSlide) {
+    if (error && !loading) {
         return (
-            <div className={styles.quizContainer}>
-                <h1>Error: No content found in this mission.</h1>
-                <button onClick={() => navigate('/')}>Go Back</button>
+            <div className={styles.quizContainer} style={{ textAlign: 'center' }}>
+                <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                >
+                    <h2 style={{ color: '#f44336', marginBottom: '1rem' }}>Access Denied</h2>
+                    <p>{error}</p>
+                    <button className={styles.checkBtn} onClick={onExit} style={{ marginTop: '2rem' }}>
+                        Return to Map
+                    </button>
+                </motion.div>
             </div>
         );
     }
 
+    if (loading || !questionData) {
+        return (
+            <div className={styles.quizContainer} style={{ textAlign: 'center' }}>
+                <h2>Loading...</h2>
+            </div>
+        );
+    }
+
+    const totalQuestions = chapter ? chapter.quest_end - chapter.quest_start + 1 : 1;
+    const currentIndex = chapter ? currentQuestionNo - chapter.quest_start : 0;
+    const progressPercent = Math.max(((currentIndex) / (totalQuestions - 1)) * 100, 1);
+
     return (
         <div className={styles.missionWrapper}>
-            {/* Progress Header */}
+            <button
+                onClick={onExit}
+                style={{
+                    position: 'absolute',
+                    top: '20px',
+                    left: '285px',
+                    background: 'rgba(0,0,0,0.5)',
+                    border: 'none',
+                    borderRadius: '50%',
+                    width: '40px',
+                    height: '40px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    cursor: 'pointer',
+                    zIndex: 1000,
+                    color: 'white'
+                }}
+                title="Exit to Map"
+            >
+                <X size={24} />
+            </button>
+
             <div className={styles.progress}>
                 <div
                     className={styles.progressBar}
-                    style={{ width: `${Math.max(((currentSlideIndex) / (slides.length - 1)) * 100, 1)}%` }}
+                    style={{ width: `${progressPercent}%` }}
                 />
             </div>
 
             <AnimatePresence mode="wait">
-                {currentSlide.type === 'theory' ? (
-                    <TheorySlide
-                        key={currentSlide.id}
-                        slide={currentSlide}
-                        onNext={handleNext}
+                {questionData.isQuestion ? (
+                    <QuizSlide
+                        key={questionData.question_number}
+                        questionData={questionData}
+                        onAnswerSubmit={handleAnswerSubmit}
                     />
                 ) : (
-                    <QuizSlide
-                        key={currentSlide.id}
-                        slide={currentSlide}
-                        onCorrect={handleCorrect}
-                        onIncorrect={handleIncorrect}
-                        onNext={handleNext}
+                    <TheorySlide
+                        key={questionData.question_number}
+                        questionData={questionData}
+                        onTheoryComplete={handleTheoryComplete}
                     />
                 )}
             </AnimatePresence>

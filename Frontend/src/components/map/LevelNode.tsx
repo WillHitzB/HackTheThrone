@@ -2,19 +2,24 @@ import { Hexagon, Lock, Check, Star } from 'lucide-react'
 import styles from './LevelNode.module.css'
 import { clsx } from 'clsx'
 import { motion } from 'framer-motion'
-import type { Topic } from '../../data/chapters'
 
 interface LevelNodeProps {
-  topic: Topic
-  onClick: (topic: Topic) => void
-  isDisabled?: boolean
+  questionNumber: number
+  position: { x: number; y: number }
+  status: 'locked' | 'available' | 'completed'
+  onClick: (questionNumber: number) => void
   horizontalSpread?: number
 }
 
-const LevelNode = ({ topic, onClick, isDisabled = false, horizontalSpread = 1 }: LevelNodeProps) => {
-  const { status, position, title } = topic
+const LevelNode = ({ 
+  questionNumber, 
+  position, 
+  status, 
+  onClick,
+  horizontalSpread = 1 
+}: LevelNodeProps) => {
   const sideClass = position.x >= 0 ? styles.right : styles.left
-  const isLocked = status === 'locked' || isDisabled
+  const isLocked = status === 'locked'
 
   const getStatusIcon = () => {
     switch (status) {
@@ -24,13 +29,16 @@ const LevelNode = ({ topic, onClick, isDisabled = false, horizontalSpread = 1 }:
         return <Check size={30} strokeWidth={3} />
       case 'available':
         return <Star size={30} fill="var(--bg-dark)" />
-      default:
-        return null
     }
   }
 
   const handleClick = () => {
-    if (!isLocked) onClick(topic)
+    if (!isLocked) {
+      console.log('Node clicked - Question:', questionNumber, 'Status:', status)
+      onClick(questionNumber)
+    } else {
+      console.log('Node locked - Question:', questionNumber)
+    }
   }
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -54,7 +62,7 @@ const LevelNode = ({ topic, onClick, isDisabled = false, horizontalSpread = 1 }:
       transition={{ type: 'spring', stiffness: 300, damping: 30 }}
       role="button"
       tabIndex={isLocked ? -1 : 0}
-      aria-label={`${title} - ${status}`}
+      aria-label={`Question ${questionNumber} - ${status}`}
       aria-disabled={isLocked}
       onClick={handleClick}
       onKeyDown={handleKeyDown}
@@ -67,7 +75,7 @@ const LevelNode = ({ topic, onClick, isDisabled = false, horizontalSpread = 1 }:
       </div>
 
       <div className={styles.label}>
-        {title}
+        {questionNumber}
       </div>
     </motion.div>
   )

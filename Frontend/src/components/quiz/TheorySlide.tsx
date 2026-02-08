@@ -1,26 +1,41 @@
+import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { ArrowRight } from 'lucide-react';
-import styles from './LessonView.module.css'; // Reusing LessonView styles for consistency
-import type { Slide } from '../../data/chapters';
-import { url } from '../../data/constant';
-import { colgroup } from 'framer-motion/client';
+import styles from './LessonView.module.css';
+
+type QuestionData = {
+    question_number: number
+    content: string
+    section_title: string
+    topic_title: string
+    isQuestion: boolean
+    xp_reward: number
+}
+
 interface TheorySlideProps {
-    slide: Slide;
-    onNext: () => void;
+    questionData: QuestionData;
+    onTheoryComplete: () => Promise<void>;
 }
 
-async function fetchdata() {
+const TheorySlide = ({ questionData, onTheoryComplete }: TheorySlideProps) => {
+    console.log('TheorySlide rendered - Question:', questionData.question_number)
     
-    const response =await fetch(url);
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
-    if (response) {
-        console.log(response)
-    } else {
-        console.log('not found' )    }
+    const handleContinue = async () => {
+        console.log('Continue clicked - Question:', questionData.question_number)
+        
+        setIsSubmitting(true);
 
-}
+        try {
+            await onTheoryComplete();
+        } catch (err) {
+            console.error('Error in handleContinue:', err);
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
 
-const TheorySlide = ({ slide, onNext }: TheorySlideProps) => {
     return (
         <motion.div
             initial={{ opacity: 0, x: 20 }}
@@ -29,18 +44,45 @@ const TheorySlide = ({ slide, onNext }: TheorySlideProps) => {
             className={styles.lessonContainer}
         >
             <div className={styles.header}>
-                <h1 className={styles.title}>{slide.title}</h1>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1rem' }}>
+                    <div style={{ fontSize: '3rem' }}>📖</div>
+                    <div>
+                        <div style={{ fontSize: '0.9rem', color: '#888' }}>
+                            {questionData.section_title}
+                        </div>
+                        <h1 className={styles.title}>{questionData.topic_title}</h1>
+                    </div>
+                </div>
             </div>
 
             <div className={styles.contentCard}>
                 <h2>Mission Briefing</h2>
                 <div className={styles.textContent}>
-                    {slide.text}
+                    <p style={{ fontSize: '1.1rem', lineHeight: '1.8', color: '#333' }}>
+                        {questionData.content}
+                    </p>
+                </div>
+                <div style={{ 
+                    marginTop: '1.5rem', 
+                    padding: '1rem',
+                    background: '#e8f5e9',
+                    borderRadius: '8px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.5rem',
+                    color: '#2e7d32'
+                }}>
+                    <span style={{ fontSize: '1.5rem' }}>📖</span>
+                    <span>+{questionData.xp_reward} XP for reading</span>
                 </div>
             </div>
 
-            <button className={styles.completeBtn} onClick={onNext}>
-                <span>Continue</span>
+            <button 
+                className={styles.completeBtn} 
+                onClick={handleContinue}
+                disabled={isSubmitting}
+            >
+                <span>{isSubmitting ? 'Processing...' : 'Continue'}</span>
                 <ArrowRight size={20} />
             </button>
         </motion.div>

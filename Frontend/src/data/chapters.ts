@@ -27,6 +27,8 @@ export type Topic = {
 export type Chapter={
     id : number
     title : string;
+    quest_start : number;
+    quest_end :number;
     description : string;
     status : ChapterStatus;
     content : Topic[];
@@ -37,6 +39,8 @@ export type Chapter={
     {
         id: 1,
         title: "Digital Survival Instincts",
+        quest_start :1,
+        quest_end : 27,
         description:
         "Understand how to stay safe, aware, and in control in the digital world.",
         status: 'available',
@@ -423,6 +427,8 @@ export type Chapter={
 {
         id: 2,
         title: "Accounts, Passwords and Authentication",
+        quest_start : 28,
+        quest_end :48,
         description:
         "Understand what accounts really are, how authentication works, and where security actually fails.",
         status: "locked",
@@ -727,6 +733,8 @@ export type Chapter={
 {
         id: 3,
         title: "Data and Privacy",
+        quest_start : 49,
+        quest_end : 69,
         description:
             "Understand how data is created, transformed, inferred, and used to shape behavior and power.",
         status: "locked",
@@ -1030,6 +1038,8 @@ export type Chapter={
 {
         id: 4,
         title: "Malware and Digital Threats",
+        quest_start: 70,
+        quest_end : 91,
         description:
             "Understand how digital threats work, how malware operates, and how trust is exploited at scale.",
         status: "locked",
@@ -1344,6 +1354,8 @@ export type Chapter={
 {
         id: 5,
         title: "Safe Daily Digital Habits",
+        quest_start : 92,
+        quest_end :114,
         description:
             "Learn how consistent daily behavior reduces digital risk more effectively than tools alone.",
         status: "locked",
@@ -1676,6 +1688,8 @@ export type Chapter={
 {
         id: 6,
         title: "Social Media and Online Behavior",
+        quest_start :115,
+        quest_end :133,
         description:
             "Understand how social platforms shape behavior, perception, identity, and risk.",
         status: "locked",
@@ -1950,6 +1964,8 @@ export type Chapter={
 {
   id: 7,
   title: "Mobile Security",
+  quest_start:134,
+  quest_end:151,
   description:
     "Understand why phones are high-risk identity hubs and how to control mobile threats through architecture awareness and daily habits.",
   status: "locked",

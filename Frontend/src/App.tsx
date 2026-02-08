@@ -4,7 +4,7 @@ import Layout from './components/layout/Layout';
 import LessonPage from './pages/LessonPage';
 import Home from './pages/Home';
 import Login from './components/login/Login';
-import Topicpage from './pages/Topicpage';
+// import Topicpage from './pages/Topicpage';
 import Practice from './pages/Practice';
 import { url } from './data/constant';
 function App() {
@@ -18,7 +18,7 @@ function App() {
           <Route path="/" element={username?<Layout/>:<Login/>}>
             <Route index element={<Home />} />
             <Route path="lesson/:chapterID" element={<LessonPage />} />
-            <Route path="lesson/:chapterID/topic/:topicid" element={<Topicpage />} />
+            {/* <Route path="lesson/:chapterID/topic/:topicid" element={<Topicpage />} /> */}
             <Route path="leaderboard" element={<div>Leaderboard (Coming Soon)</div>} />
             <Route path="practice" element={<Practice/>} />
             <Route path="profile" element={<div>Profile (Coming Soon)</div>} />

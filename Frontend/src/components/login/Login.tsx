@@ -35,26 +35,100 @@ const Login = () => {
     const hasNumber = /\d/.test(password)
     const hasSpecialChar = /[@$!%*#?&]/.test(password)
 
-    if (!(hasMinLength && hasLetter && hasNumber && hasSpecialChar)) {
+    if (0/*(hasMinLength && hasLetter && hasNumber && hasSpecialChar)*/) {
       return 'Password must be at least 8 characters long, contain a letter, a number, and a special character'
     }
     return true
   }
 
-  const onSubmit = async (data: LoginFormData) => {
-    console.log('Form Data:', data)
-    setLoginError('')
+const onSubmit = async (data: LoginFormData) => {
+  console.log('Form Data:', data)
+  setLoginError('')
 
-    if (!data.is_sign_in) {
-      // LOGIN LOGIC
-      try {
+  if (!data.is_sign_in) {
+    // LOGIN LOGIC
+    try {
+      const body = new URLSearchParams()
+      body.append('username', data.username)
+      body.append('password', data.password)
+
+      const response = await fetch(`${url}/auth/login`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: body.toString(),
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}))
+        setLoginError(errorData.message || 'Invalid username or password')
+        console.error('Login failed', response.status)
+        return
+      }
+
+      const result = await response.json()
+      console.log('Full Login Response:', result)
+
+      // Check what fields actually exist
+      const token = result.access_token || result.token || result.accessToken
+
+      if (!token) {
+        console.error('No token found in response:', result)
+        setLoginError('Login succeeded but no token received')
+        return
+      }
+
+      localStorage.setItem('access_token', token)
+      localStorage.setItem('username', data.username)
+
+      console.log('Token saved:', localStorage.getItem('access_token'))
+      console.log('Logged in')
+      
+      window.location.href = '/'
+    } catch (err) {
+      console.error('Login error', err)
+      setLoginError('An error occurred. Please try again.')
+    }
+  } else {
+    // SIGNUP LOGIC
+    try {
+      console.log('Signup Data:', data)
+
+      // Step 1: Create the account
+      const signupResponse = await fetch(`${url}/auth/signup`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          username: data.username,
+          password: data.password
+        }),
+      })
+
+      if (!signupResponse.ok) {
+        const errorData = await signupResponse.json().catch(() => ({}))
+        setLoginError(errorData.message || 'Signup failed')
+        console.error('Signup failed', signupResponse.status)
+        return
+      }
+
+      const signupResult = await signupResponse.json()
+      console.log('Full Signup Response:', signupResult)
+
+      // Step 2: Check if token is in signup response
+      let token = signupResult.access_token || signupResult.token || signupResult.accessToken
+
+      if (!token) {
+        console.log('No token in signup response. Logging in automatically...')
+        
+        // Step 3: Login automatically after signup
         const body = new URLSearchParams()
         body.append('username', data.username)
         body.append('password', data.password)
 
-        console.log('Login Data:', data)
-
-        const response = await fetch(`${url}/auth/login`, {
+        const loginResponse = await fetch(`${url}/auth/login`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/x-www-form-urlencoded',
@@ -62,65 +136,39 @@ const Login = () => {
           body: body.toString(),
         })
 
-        if (!response.ok) {
-          const errorData = await response.json().catch(() => ({}))
-          setLoginError(errorData.message || 'Invalid username or password')
-          console.error('Login failed', response.status)
+        if (!loginResponse.ok) {
+          setLoginError('Signup succeeded but auto-login failed. Please login manually.')
+          console.error('Auto-login failed', loginResponse.status)
           return
         }
 
-        const result = await response.json()
-        console.log('Login Response:', result)
+        const loginResult = await loginResponse.json()
+        console.log('Auto-login Response:', loginResult)
+        
+        token = loginResult.access_token || loginResult.token || loginResult.accessToken
+      }
 
-        localStorage.setItem('access_token', result.access_token)
-        localStorage.setItem('username', data.username)
+      if (!token) {
+        console.error('Still no token after login:', token)
+        setLoginError('Could not obtain access token. Please try logging in manually.')
+        return
+      }
 
-        console.log('Logged in')
+      localStorage.setItem('access_token', token)
+      localStorage.setItem('username', data.username)
+
+      console.log('Token saved:', localStorage.getItem('access_token'))
+      console.log('Signed up and logged in successfully')
+      
+      setTimeout(() => {
         window.location.href = '/'
-      } catch (err) {
-        console.error('Login error', err)
-        setLoginError('An error occurred. Please try again.')
-      }
-    } else {
-      // SIGNUP LOGIC
-      try {
-        console.log('Signup Data:', data)
-
-        const response = await fetch(`${url}/auth/signup`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            username: data.username,
-            password: data.password
-          }),
-        })
-
-        if (!response.ok) {
-          const errorData = await response.json().catch(() => ({}))
-          setLoginError(errorData.message || 'Signup failed')
-          console.error('Signup failed', response.status)
-          return
-        }
-
-        const result = await response.json()
-        console.log('Signup Response:', result)
-
-        // Auto-login after signup
-        localStorage.setItem('access_token', result.access_token)
-        localStorage.setItem('username', data.username)
-
-        console.log('Signed up successfully')
-        setTimeout(() => {
-          window.location.href = '/'
-        }, 20000);
-      } catch (err) {
-        console.error('Signup error', err)
-        setLoginError('An error occurred during signup. Please try again.')
-      }
+      }, 10000);
+    } catch (err) {
+      console.error('Signup error', err)
+      setLoginError('An error occurred during signup. Please try again.')
     }
   }
+}
 
   return (
     <div className={styles.container}>

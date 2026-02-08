@@ -3,41 +3,72 @@ import { motion } from 'framer-motion';
 import { Check, X, ArrowRight, AlertTriangle } from 'lucide-react';
 import { clsx } from 'clsx';
 import styles from './QuizView.module.css';
-import type { Slide } from '../../data/chapters';
 
-interface QuizSlideProps {
-    slide: Slide;
-    onCorrect: () => void;
-    onIncorrect: () => void;
-    onNext: () => void;
+type QuestionData = {
+    question_number: number
+    content: string
+    section_title: string
+    topic_title: string
+    isQuestion: boolean
+    options?: string[]
+    correct_answer?: string
+    xp_reward: number
 }
 
-const QuizSlide = ({ slide, onCorrect, onIncorrect, onNext }: QuizSlideProps) => {
+interface QuizSlideProps {
+    questionData: QuestionData;
+    onAnswerSubmit: (answer: string) => Promise<{ isCorrect: boolean }>;
+}
+
+const QuizSlide = ({ questionData, onAnswerSubmit }: QuizSlideProps) => {
+    console.log('QuizSlide rendered - Question:', questionData.question_number)
+    
     const [selectedOption, setSelectedOption] = useState<string | null>(null);
     const [answerState, setAnswerState] = useState<'correct' | 'incorrect' | null>(null);
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
-    // Reset state when slide changes
     useEffect(() => {
+        console.log('Question changed - resetting state')
         setSelectedOption(null);
         setAnswerState(null);
-    }, [slide.id]);
+        setIsSubmitting(false);
+    }, [questionData.question_number]);
 
-    const handleOptionClick = (optionId: string) => {
-        if (answerState) return;
-        setSelectedOption(optionId);
+    const handleOptionClick = (option: string) => {
+        if (answerState || isSubmitting) return
+        console.log('Option selected:', option)
+        setSelectedOption(option);
     };
 
-    const handleCheck = () => {
-        if (!selectedOption || !slide.options) return;
+    const handleCheck = async () => {
+        if (!selectedOption || isSubmitting) return
 
-        const correctOption = slide.options.find(o => o.correct);
-        if (selectedOption === correctOption?.id) {
-            setAnswerState('correct');
-            onCorrect();
-        } else {
-            setAnswerState('incorrect');
-            onIncorrect();
+        console.log('Check answer clicked - Selected:', selectedOption, 'Correct:', questionData.correct_answer)
+        
+        setIsSubmitting(true);
+
+        try {
+            const result = await onAnswerSubmit(selectedOption);
+            console.log('Result received:', result)
+            
+            if (result.isCorrect) {
+                console.log('Correct answer')
+                setAnswerState('correct');
+            } else {
+                console.log('Incorrect answer')
+                setAnswerState('incorrect');
+            }
+        } catch (err) {
+            console.error('Error submitting:', err)
+        } finally {
+            setIsSubmitting(false);
         }
+    };
+
+    const handleRetry = () => {
+        console.log('Retry clicked')
+        setAnswerState(null);
+        setSelectedOption(null);
     };
 
     return (
@@ -48,32 +79,36 @@ const QuizSlide = ({ slide, onCorrect, onIncorrect, onNext }: QuizSlideProps) =>
             className={styles.quizContainer}
         >
             <div className={styles.questionCard}>
-                <h2>{slide.question}</h2>
+                <div style={{ fontSize: '0.9rem', color: '#888', marginBottom: '0.5rem' }}>
+                    {questionData.section_title} • {questionData.xp_reward} XP
+                </div>
+                <h2>{questionData.content}</h2>
             </div>
 
             <div className={styles.optionsGrid}>
-                {slide.options!.map((option) => {
+                {questionData.options?.map((option, index) => {
                     let stateClass = '';
-                    if (answerState && option.id === selectedOption) {
+                    
+                    if (answerState && option === selectedOption) {
                         stateClass = answerState === 'correct' ? styles.correct : styles.incorrect;
-                    } else if (answerState === 'correct' && option.correct) {
+                    } else if (answerState && option === questionData.correct_answer) {
                         stateClass = styles.correct;
-                    } else if (selectedOption === option.id) {
+                    } else if (selectedOption === option) {
                         stateClass = styles.selected;
                     }
 
                     return (
                         <button
-                            key={option.id}
+                            key={index}
                             className={clsx(styles.optionBtn, stateClass)}
-                            onClick={() => handleOptionClick(option.id)}
-                            disabled={!!answerState}
+                            onClick={() => handleOptionClick(option)}
+                            disabled={!!answerState || isSubmitting}
                         >
-                            {option.text}
+                            {option}
                             {stateClass === styles.correct && <Check size={20} />}
                             {stateClass === styles.incorrect && <X size={20} />}
                         </button>
-                    )
+                    );
                 })}
             </div>
 
@@ -82,25 +117,22 @@ const QuizSlide = ({ slide, onCorrect, onIncorrect, onNext }: QuizSlideProps) =>
                     <button
                         className={styles.checkBtn}
                         onClick={handleCheck}
-                        disabled={!selectedOption}
+                        disabled={!selectedOption || isSubmitting}
                     >
-                        CHECK ANSWER
+                        {isSubmitting ? 'CHECKING...' : 'CHECK ANSWER'}
                     </button>
-                ) : (
+                ) : answerState === 'incorrect' ? (
                     <button
-                        className={clsx(styles.checkBtn, styles[answerState])}
-                        onClick={() => {
-                            if (answerState === 'incorrect') {
-                                setAnswerState(null);
-                                setSelectedOption(null);
-                            } else {
-                                onNext();
-                            }
-                        }}
+                        className={clsx(styles.checkBtn, styles.incorrect)}
+                        onClick={handleRetry}
                     >
-                        {answerState === 'correct' ? 'CONTINUE' : 'RETRY'}
+                        RETRY
                         <ArrowRight size={20} />
                     </button>
+                ) : (
+                    <div style={{ textAlign: 'center', color: '#4CAF50', fontSize: '1.2rem', fontWeight: 'bold' }}>
+                        Correct! Loading next...
+                    </div>
                 )}
             </div>
 
@@ -111,7 +143,12 @@ const QuizSlide = ({ slide, onCorrect, onIncorrect, onNext }: QuizSlideProps) =>
                     className={styles.feedbackError}
                 >
                     <AlertTriangle size={20} />
-                    <span>ACCESS DENIED - Incorrect answer</span>
+                    <span>Incorrect answer</span>
+                    {questionData.correct_answer && (
+                        <div style={{ marginTop: '0.5rem', fontSize: '0.9rem' }}>
+                            Correct answer: <strong>{questionData.correct_answer}</strong>
+                        </div>
+                    )}
                 </motion.div>
             )}
         </motion.div>
