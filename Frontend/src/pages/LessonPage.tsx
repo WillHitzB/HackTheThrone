@@ -104,10 +104,12 @@ const LessonPage = () => {
         }
       )
 
+      // Position nodes on vertical sine wave
       const positioned = positionOnVerticalSineWave(nodes, {
         amplitude: 20,
-        verticalGap: 100,
-        startY: 50
+        verticalGap: 110,
+        startY: 50,
+        frequency: 0.2
       })
 
       console.log('Nodes updated:', positioned.length)

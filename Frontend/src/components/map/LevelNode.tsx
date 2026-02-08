@@ -11,12 +11,12 @@ interface LevelNodeProps {
   horizontalSpread?: number
 }
 
-const LevelNode = ({ 
-  questionNumber, 
-  position, 
-  status, 
+const LevelNode = ({
+  questionNumber,
+  position,
+  status,
   onClick,
-  horizontalSpread = 1 
+  horizontalSpread = 2
 }: LevelNodeProps) => {
   const sideClass = position.x >= 0 ? styles.right : styles.left
   const isLocked = status === 'locked'
@@ -72,10 +72,6 @@ const LevelNode = ({
         <div className={styles.content}>
           {getStatusIcon()}
         </div>
-      </div>
-
-      <div className={styles.label}>
-        {questionNumber}
       </div>
     </motion.div>
   )
