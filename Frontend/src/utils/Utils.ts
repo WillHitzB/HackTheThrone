@@ -47,7 +47,7 @@ interface PositionedNode { position: Position }
 
 export function positionOnVerticalSineWave<T extends PositionedNode>(
   nodes: T[],
-  options: { amplitude?: number; verticalGap?: number; startY?: number; phaseOffset?: number } = {}
+  options: { amplitude?: number; verticalGap?: number; frequency?: number; startY?: number; phaseOffset?: number } = {}
 ): T[] {
   const {
     amplitude = options.amplitude || 0,
