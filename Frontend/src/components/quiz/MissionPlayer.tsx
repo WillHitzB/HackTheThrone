@@ -136,7 +136,6 @@ const MissionPlayer = ({ chapterID, startQuestionNo, onComplete, onExit, onProgr
         console.log('=== ANSWER SUBMIT START ===')
         console.log('Question number:', currentQuestionNo)
         console.log('Selected answer:', selectedAnswer)
-
         if (!questionData) {
             console.error('No question data')
             return { isCorrect: false }
@@ -201,7 +200,6 @@ const MissionPlayer = ({ chapterID, startQuestionNo, onComplete, onExit, onProgr
                     console.log('No chapter, returning')
                     return { isCorrect: true }
                 }
-
                 if (currentQuestionNo >= chapter.quest_end) {
                     console.log('Last question - chapter complete')
                     setIsCompleted(true)
