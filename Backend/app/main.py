@@ -8,6 +8,7 @@ from app.api.auth import get_current_user
 from app.models import User
 import os
 import random
+import json
 
 # Create database tables if they dont exist
 Base.metadata.create_all(bind=engine)
@@ -38,7 +39,19 @@ async def root():
 async def health_check():
     return PlainTextResponse(content="healthy", status_code=200)
 
+from app.utils.redis import get_redis
+
 @app.get("/fact")
 async def facts(current_user: User = Depends(get_current_user)):
-    with open(FACTS_FILE, "r") as f:
-        return PlainTextResponse(content=random.choice(f.readlines()).strip(), status_code=200)
+    redis = await get_redis()
+    cache_key = "facts_list"
+    
+    cached_facts = await redis.get(cache_key)
+    if cached_facts:
+        facts_list = json.loads(cached_facts)
+    else:
+        with open(FACTS_FILE, "r") as f:
+            facts_list = [line.strip() for line in f.readlines()]
+        await redis.setex(cache_key, 86400, json.dumps(facts_list)) # Cache for 24 hours
+        
+    return PlainTextResponse(content=random.choice(facts_list), status_code=200)

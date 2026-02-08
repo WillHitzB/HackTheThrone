@@ -52,3 +52,4 @@ uvicorn==0.40.0
 watchfiles==1.1.1
 websockets==16.0
 bcrypt==4.3.0
+redis==5.0.1

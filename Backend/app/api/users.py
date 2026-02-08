@@ -6,11 +6,26 @@ from app.models import User
 from app.schemas import LeaderboardEntry
 from app.api.auth import get_current_user
 
+import json
+from app.utils.redis import get_redis
+
 router = APIRouter(prefix="/users", tags=["users"])
 
 @router.get("/leaderboard", response_model=List[LeaderboardEntry])
 async def get_leaderboard(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    redis = await get_redis()
+    cache_key = "leaderboard"
+    
+    # Try fetching from cache
+    cached_data = await redis.get(cache_key)
+    if cached_data:
+        return json.loads(cached_data)
 
-
+    # Cache miss: fetch from DB
     top_users = db.query(User).order_by(User.xp.desc()).limit(10).all()
-    return [{"username": user.username, "xp": user.xp} for user in top_users]
+    leaderboard = [{"username": user.username, "xp": user.xp} for user in top_users]
+    
+    # Store in cache with 60s expiration
+    await redis.setex(cache_key, 60, json.dumps(leaderboard))
+    
+    return leaderboard

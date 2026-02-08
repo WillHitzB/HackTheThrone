@@ -8,21 +8,35 @@ from app.models import User, UserProgress
 from app.schemas import QuestionResponse, QuestionValidateRequest, UserProgressResponse
 from app.api.auth import get_current_user
 
+from app.utils.redis import get_redis
+
 router = APIRouter(prefix="/questions", tags=["questions"])
 
 # Load questions from JSON
 QUESTIONS_FILE = os.path.join(os.path.dirname(os.path.dirname(__file__)), "data", "questions.json")
 
-def load_questions():
+async def load_questions():
+    redis = await get_redis()
+    cache_key = "questions_data"
+    
+    cached_questions = await redis.get(cache_key)
+    if cached_questions:
+        return json.loads(cached_questions)
+
     if not os.path.exists(QUESTIONS_FILE):
         return []
+    
     with open(QUESTIONS_FILE, "r") as f:
         data = json.load(f)
-        return data.get("questions", [])
+        questions = data.get("questions", [])
+        
+    # Cache for 1 hour (3600s) as questions don't change often
+    await redis.setex(cache_key, 3600, json.dumps(questions))
+    return questions
 
 @router.get("/{question_num}", response_model=QuestionResponse)
 async def get_question(question_num: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
-    questions = load_questions()
+    questions = await load_questions()
     question = next((q for q in questions if q["question_number"] == question_num), None)
     
     if not question:
@@ -41,7 +55,7 @@ async def get_question(question_num: int, db: Session = Depends(get_db), current
 
 @router.post("/validate")
 async def validate_answer(request: QuestionValidateRequest, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
-    questions = load_questions()
+    questions = await load_questions()
     question = next((q for q in questions if q["question_number"] == request.question_number), None)
     
     if not question:
@@ -59,6 +73,10 @@ async def validate_answer(request: QuestionValidateRequest, db: Session = Depend
             db.add(new_progress)
             current_user.xp += question.get("xp_reward", 0)
             db.commit()
+            # Invalidate leaderboard cache
+            redis = await get_redis()
+            await redis.delete("leaderboard")
+            
         return {
                 "status": "success", 
                 "message": "Theory slide completed", 
@@ -77,6 +95,10 @@ async def validate_answer(request: QuestionValidateRequest, db: Session = Depend
             db.add(new_progress)
             current_user.xp += question.get("xp_reward", 0)
             db.commit()
+            # Invalidate leaderboard cache
+            redis = await get_redis()
+            await redis.delete("leaderboard")
+
         return {
                 "status": "success", 
                 "message": "Correct Answer", 
